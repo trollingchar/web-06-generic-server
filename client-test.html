@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Пиратский клиент</title>
+</head>
+<body>
+<input id="room" value="main_lobby" />
+<button onclick="joinRoom()">Присоединиться</button>
+
+<input id="message" placeholder="Сообщение..." />
+<button onclick="sendMessage()">Отправить</button>
+
+<div id="output" style="margin-top:20px; white-space: pre-wrap;"></div>
+
+<script>
+    const socket = new WebSocket('ws://localhost:10800');
+
+    function joinRoom() {
+        const room = document.getElementById('room').value;
+        socket.send(JSON.stringify({
+            type: 'join',
+            room: room
+        }));
+    }
+
+    function sendMessage() {
+        const msg = document.getElementById('message').value;
+        socket.send(JSON.stringify({
+            type: 'chat',
+            text: msg,
+            room: document.getElementById('room').value
+        }));
+    }
+
+    socket.addEventListener('message', event => {
+        const message = JSON.parse(event.data);
+        const output = document.getElementById('output');
+        output.textContent += `\n${message.text}`;
+    });
+</script>
+</body>
+</html>
