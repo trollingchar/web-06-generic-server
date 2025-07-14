@@ -6,16 +6,56 @@ const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
 
+const nameParts = [
+    [
+        "echo-",
+        "npc-",
+        "based ",
+        "giga",
+        "cyber",
+        "neuro",
+        "sigma-",
+        "mge-",
+        "uvb-",
+        "hidden ",
+        "meme",
+        "proxy ",
+        "ultra",
+    ],
+    [
+        "crab",
+        "revolt",
+        "strike",
+        "mash",
+        "noob",
+        "test",
+        "troll",
+        "unit",
+        "crack",
+        "blast",
+        "wave",
+        "sun",
+        "build",
+        "fighter",
+        "pirate"
+    ],
+];
+for (let i = 0; i < 100; i++) {
+    console.log(nameParts.map(arr => arr[Math.random() * arr.length | 0]).join(''));
+}
+
+
 class User {
     constructor(socket) {
         this.id = this.generateId();
         this.socket = socket;
-        this.nick = 'Player' + Math.floor(Math.random() * 1000);
+        this.nick = nameParts.map(arr => arr[Math.random() * arr.length | 0]).join('');
         this.rooms = [];
     }
 
     generateId() {
-        return crypto.randomBytes(6).toString('hex');
+        // return crypto.randomBytes(6).toString('hex');
+        return Math.random() * 1000000 | 0;
     }
 
     send(message) {
