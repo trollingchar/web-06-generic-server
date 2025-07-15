@@ -1,6 +1,6 @@
 const express = require('express');
 const http = require('http');
-const WebSocket = require('ws'); // или native WebSocket в Node.js v22+
+const WebSocket = require('ws');
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
@@ -8,36 +8,36 @@ const wss = new WebSocket.Server({ server });
 
 const nameParts = [
     [
-        "echo-",
-        "npc-",
-        "based ",
-        "giga",
-        "cyber",
-        "neuro",
-        "sigma-",
-        "mge-",
-        "uvb-",
-        "hidden ",
-        "meme",
-        "proxy ",
-        "ultra",
+        'echo-',
+        'npc-',
+        'giga',
+        'cyber',
+        'neuro',
+        'sigma-',
+        'mge-',
+        'uvb-',
+        'hidden ',
+        'meme',
+        'proxy ',
+        'ultra',
     ],
     [
-        "crab",
-        "revolt",
-        "strike",
-        "mash",
-        "noob",
-        "test",
-        "troll",
-        "unit",
-        "crack",
-        "blast",
-        "wave",
-        "sun",
-        "build",
-        "fighter",
-        "pirate"
+        'crab',
+        'revolt',
+        'strike',
+        'mash',
+        'noob',
+        'test',
+        'troll',
+        'unit',
+        'crack',
+        'blast',
+        'storm',
+        'sun',
+        'build',
+        'fighter',
+        'pirate',
+        'name',
     ],
 ];
 for (let i = 0; i < 100; i++) {

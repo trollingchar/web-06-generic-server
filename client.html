@@ -16,10 +16,10 @@
 
 <!-- Навигационная панель -->
 <nav class="flex justify-around border-b border-stone-700 bg-stone-800 p-4">
-    <button onclick="navigate('lobby')" class="hover:text-lime-400">Главное лобби</button>
-    <button onclick="navigateSettings()" class="hover:text-lime-400">Настройки</button>
-    <button onclick="navigate('deck')" class="hover:text-lime-400">Редактор колоды</button>
-    <button onclick="navigate('game')" class="hover:text-lime-400">Игра</button>
+    <button onclick="" class="hover:text-lime-400">Главное лобби</button>
+    <button onclick="" class="hover:text-lime-400">Настройки</button>
+    <button onclick="" class="hover:text-lime-400">Редактор колоды</button>
+    <button onclick="" class="hover:text-lime-400">Игра</button>
 </nav>
 
 <!-- Контейнер основного контента -->
@@ -44,10 +44,25 @@
     </div>
 
     <!-- Правый динамический контент -->
-    <div id="content" class="w-3/4 overflow-y-auto bg-stone-900 p-4"></div>
+    <div id="content" class="w-3/4 overflow-y-auto bg-stone-900 p-4">
+    </div>
 </div>
 
 <script>
+    class IdGen {
+        constructor() { this.id = 0; }
+        next(f) {
+            if (!f) return ++this.id;
+            f(++this.id);
+            return this.id;
+        }
+    }
+    const idGen = new IdGen(); // использовать для html id
+
+
+    function dgebi   (id)           { return document.getElementById(id); }
+    function dgebiael(id, event, f) { return document.getElementById(id).addEventListener(event, f); }
+
 
     // === Глобальное состояние клиента ===
     const client = {
@@ -61,6 +76,98 @@
         onMessage: {}, // { type: [callbacks] }
         volume: 0.5,
     };
+
+
+    class Event {
+        constructor  () { this.handlers = []; }
+        add   (handler) { this.handlers.push(handler); }
+        remove(handler) { const i = this.handlers.indexOf(handler); if (i !== -1) this.handlers.splice(i, 1); }
+        clear        () { this.handlers = []; }
+        emit  (...data) { [...this.handlers].forEach(h => h(...data)); }
+    }
+
+
+    class LobbyUi {
+        constructor(container, rooms) {
+            this.container = container;
+
+            // События
+            this.onHostGame = new Event();
+            this.onJoinGame = new Event();
+            this.onSpectateGame = new Event();
+
+            // Статические данные
+            this.updateRooms(rooms);
+        }
+
+
+        render() {
+            const fns = [];
+
+            // === Верхняя панель: создание хоста ===
+            const hostSection = `
+                <div class="mb-4 p-2 bg-stone-800 rounded flex justify-between items-center">
+                    <input
+                        id="${idGen.next(i => fns.push(() => this.passwordField = dgebi(i)))}"
+                        type="text" placeholder="Пароль (не обязателен)" class="p-2 bg-stone-700 text-white w-1/2" />
+                    <button
+                        id="${idGen.next(i => fns.push(() => dgebiael(i, 'click', () => this.onHostGame.emit())))}"
+                        class="px-4 py-2 bg-lime-600 hover:bg-lime-500 rounded">Создать хост</button>
+                </div>
+            `;
+
+            // === Список комнат ===
+            const roomElements = this.rooms.map(room => {
+                return `
+                    <div class="mb-2 p-3 bg-stone-800 rounded flex justify-between items-center">
+                        <div class="flex flex-col">
+                            <span class="font-bold">${room.name}</span>
+                            <span class="text-sm text-stone-400">Игроков: ${room.players}</span>
+                        </div>
+                        <div class="space-x-2">
+                            <button
+                                id="${idGen.next(i => fns.push(() => dgebiael(i, 'click', () => this.onJoinGame.emit(room.id))))}"
+                                class="px-3 py-1 bg-lime-600 hover:bg-lime-500 rounded">Играть</button>
+                            <button
+                                id="${idGen.next(i => fns.push(() => dgebiael(i, 'click', () => this.onSpectateGame.emit(room.id))))}"
+                                class="px-3 py-1 bg-stone-600 hover:bg-stone-500 rounded">Смотреть</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            const noRoomsMessage = this.rooms.length ? '' : `<div class="text-stone-400">Нет активных игр</div>`;
+
+            // === Полная разметка ===
+            this.container.innerHTML = `
+                <h1 class="text-2xl font-bold mb-4">Список комнат</h1>
+                ${hostSection}
+                ${roomElements}
+                ${noRoomsMessage}
+            `;
+
+            fns.forEach(f => f());
+        }
+
+
+        updateRooms(roomList) {
+            this.rooms = [...roomList];
+            this.render();
+        }
+    }
+
+
+    // тест
+    const rooms = [
+        { id: "id-0", name: "test", players: 1},
+        { id: "id-1", name: "echo", players: 2},
+        { id: "id-2", name: "crab", players: 2, password: "test" },
+    ];
+    const lobbyUi = new LobbyUi(document.getElementById('content'), rooms);
+    lobbyUi.onHostGame.add(i => console.log(`host: ${i}`));
+    lobbyUi.onJoinGame.add(i => console.log(`join: ${i}`));
+    lobbyUi.onSpectateGame.add(i => console.log(`spec: ${i}`));
+
 
     // === Инициализация соединения ===
     function connectToServer(url = 'ws://localhost:10800') {
@@ -138,6 +245,10 @@
         }
         client.onMessage[type].push(handler);
     }
+
+
+    // точка входа в основную программу
+
 
     // === Примеры использования ===
     connectToServer();
