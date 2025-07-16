@@ -91,40 +91,34 @@
         constructor(container, rooms) {
             this.container = container;
 
-            // События
             this.onHostGame = new Event();
             this.onJoinGame = new Event();
             this.onSpectateGame = new Event();
 
-            // Статические данные
             this.updateRooms(rooms);
         }
-
 
         render() {
             const fns = [];
 
-            // === Верхняя панель: создание хоста ===
+            // --- Верхняя панель: создание хоста ---
             const hostSection = `
-                <div class="mb-4 p-2 bg-stone-800 rounded flex justify-between items-center">
+                <div class="mb-4 p-2 bg-stone-800 rounded flex flex-col space-y-2">
                     <input
                         id="${idGen.next(i => fns.push(() => this.passwordField = dgebi(i)))}"
-                        type="text" placeholder="Пароль (не обязателен)" class="p-2 bg-stone-700 text-white w-1/2" />
+                        type="text" placeholder="Пароль (не обязателен)"
+                        class="p-2 bg-stone-700 text-white w-full"/>
                     <button
-                        id="${idGen.next(i => fns.push(() => dgebiael(i, 'click', () => this.onHostGame.emit())))}"
-                        class="px-4 py-2 bg-lime-600 hover:bg-lime-500 rounded">Создать хост</button>
+                        id="${idGen.next(i => fns.push(() => dgebiael(i, 'click', () => this.onHostGame.emit(this.passwordField.value || null))))}"
+                        class="px-4 py-2 bg-lime-600 hover:bg-lime-500 rounded w-full">Создать хост</button>
                 </div>
             `;
 
-            // === Список комнат ===
-            const roomElements = this.rooms.map(room => {
+            // --- Список комнат ---
+            const roomList = this.rooms.map(room => {
                 return `
-                    <div class="mb-2 p-3 bg-stone-800 rounded flex justify-between items-center">
-                        <div class="flex flex-col">
-                            <span class="font-bold">${room.name}</span>
-                            <span class="text-sm text-stone-400">Игроков: ${room.players}</span>
-                        </div>
-                        <div class="space-x-2">
+                    <div class="mb-2 p-3 bg-stone-800 rounded flex items-center">
+                        <div class="space-x-2 flex-shrink-0">
                             <button
                                 id="${idGen.next(i => fns.push(() => dgebiael(i, 'click', () => this.onJoinGame.emit(room.id))))}"
                                 class="px-3 py-1 bg-lime-600 hover:bg-lime-500 rounded">Играть</button>
@@ -132,23 +126,27 @@
                                 id="${idGen.next(i => fns.push(() => dgebiael(i, 'click', () => this.onSpectateGame.emit(room.id))))}"
                                 class="px-3 py-1 bg-stone-600 hover:bg-stone-500 rounded">Смотреть</button>
                         </div>
+                        <div class="ml-4 flex-1">
+                            <div class="font-bold">${room.name}</div>
+                            <div class="text-sm text-stone-400">Игроков: ${room.players}</div>
+                        </div>
                     </div>
                 `;
             }).join('');
 
-            const noRoomsMessage = this.rooms.length ? '' : `<div class="text-stone-400">Нет активных игр</div>`;
+            const noRoomsMessage = this.rooms.length ? '' : '<div class="text-stone-400">Нет активных игр</div>';
 
-            // === Полная разметка ===
+            // --- Обновляем HTML ---
             this.container.innerHTML = `
-                <h1 class="text-2xl font-bold mb-4">Список комнат</h1>
-                ${hostSection}
-                ${roomElements}
-                ${noRoomsMessage}
-            `;
+            <h1 class="text-2xl font-bold mb-4">Список комнат</h1>
+            ${hostSection}
+            ${roomList}
+            ${noRoomsMessage}
+        `;
 
+            // --- Выполняем все отложенные действия ---
             fns.forEach(f => f());
         }
-
 
         updateRooms(roomList) {
             this.rooms = [...roomList];
@@ -156,17 +154,180 @@
         }
     }
 
+    class SettingsUi {
+        constructor(container, settings) {
+            this.container = container;
+
+            this.settings = { ...settings };
+
+            this.onSave = new Event();
+            this.onReset = new Event();
+
+            this.render();
+        }
+
+        render() {
+            // в принципе возможно тут и не нужен тот паттерн но ладно пусть будет
+            // скорость разработки важней
+            const fns = [];
+
+            this.container.innerHTML = `
+            <h1 class="text-2xl font-bold mb-4">Настройки</h1>
+            <div class="space-y-4">
+                <div class="flex flex-col">
+                    <label class="block mb-2">Имя игрока:</label>
+                    <input
+                        id="${idGen.next(i => fns.push(() => this.usernameInput = dgebi(i)))}"
+                        type="text" value="${this.settings.username}"
+                        class="p-2 bg-stone-700 text-white rounded focus:outline-none"/>
+                </div>
+                <div class="flex flex-col">
+                    <label class="block mb-2">Громкость звука (${this.settings.volume})</label>
+                    <input
+                        id="${idGen.next(i => fns.push(() => this.volumeInput = dgebi(i)))}"
+                        type="range" min="0" max="1" step="0.01" value="${this.settings.volume}" class="w-full"/>
+                </div>
+                <div class="flex gap-2">
+                    <button id="${idGen.next(i => fns.push(() => dgebiael(i, 'click', () => this.onSave.emit({
+                        username: this.usernameInput.value,
+                        volume: this.volumeInput.value
+                    }))))}" class="px-4 py-2 bg-lime-600 hover:bg-lime-500 rounded flex-1">Сохранить</button>
+                    <button id="${idGen.next(i => fns.push(() => dgebiael(i, 'click', () => {
+                        this.usernameInput.value = 'Player' + Math.floor(Math.random() * 1000);
+                        this.volumeInput.value = 0.5;
+                        this.onReset.emit();
+                    })))}" class="px-4 py-2 bg-stone-600 hover:bg-stone-500 rounded flex-1">Сбросить</button>
+                </div>
+            </div>
+        `;
+
+            fns.forEach(f => f());
+        }
+    }
+
+
+    class DeckEditorUi {
+        constructor(container) {
+            this.container = container;
+
+            // === Состояние ===
+            this.deck = []; // Массив карт в колоде
+            this.allCards = Array.from({ length: 100 }, (_, i) => ({
+                id: 'card-' + (i + 1),
+                name: 'Карта #' + (i + 1)
+            }));
+
+            // === События ===
+            this.onCardAdd = new Event();
+            this.onCardRemove = new Event();
+
+            // === Рендерим UI ===
+            this.render();
+            this.setupHandlers();
+        }
+
+        // todo косяк на косяке, переделать все это
+        render() {
+            const fns = [];
+
+            // === Вся разметка за один вызов innerHTML ===
+            this.container.innerHTML = `
+            <!-- Верхняя панель -->
+            <div class="mb-4 flex gap-2">
+                <button id="${idGen.next(i => fns.push(() => dgebiael(i, 'click', () => {
+                    const cardId = 'card-' + Math.floor(Math.random() * 100 + 1);
+                    this.addCard({ id: cardId, name: cardId });
+                    // addCard дергает render
+                }))}" class="px-4 py-2 bg-lime-600 hover:bg-lime-500 rounded">Добавить случайную</button>
+                <button id="${idGen.next(i => fns.push(() => dgebiael(i, 'click', () => this.deck = [], this.render(), this.setupHandlers()))}" class="px-4 py-2 bg-stone-600 hover:bg-stone-500 rounded">Очистить</button>
+            </div>
+
+            <!-- Основной контент -->
+            <div class="flex flex-1 overflow-hidden gap-4">
+
+                <!-- Все карты слева -->
+                <div class="w-5/6 pr-4 overflow-y-auto border-r border-stone-700">
+                    <h2 class="font-bold text-lg mb-2">Доступные карты</h2>
+                    <div id="deck-editor-left" class="grid grid-cols-8 gap-4">
+                        <!-- todo почему здесь ниче нет -->
+                    </div>
+                </div>
+
+                <!-- Колода справа -->
+                <div class="w-1/6 pl-4 overflow-y-auto">
+                    <h2 class="font-bold text-lg mb-2">Моя колода</h2>
+                    <div id="deck-editor-right" class="relative h-[500px]">
+                        <div id="deck-cards" class="flex flex-col -space-y-32">
+                            <!-- todo и здесь -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+            // === Заполняем доступные карты ===
+            const leftArea = document.getElementById('deck-editor-left');
+            leftArea.innerHTML = this.allCards.map(card => {
+                return `
+                <div class="w-32 h-48 bg-stone-700 rounded-3xl shadow-md flex items-center justify-center text-xs p-2 outline outline-1 outline-stone-500 cursor-pointer"
+                     title="Добавить в колоду">${card.name}</div>`;
+            }).join('');
+
+            // === Заполняем текущую колоду ===
+            const rightArea = document.getElementById('deck-cards');
+            if (this.deck.length === 0) {
+                rightArea.innerHTML = '<div class="text-stone-400 mt-4">Колода пуста</div>';
+            } else {
+                rightArea.innerHTML = this.deck.map((card, index) => {
+                    const cardId = 'deck-card-' + index;
+                    return `
+                    <div id="${idGen.next(i => fns.push(() => {
+                        dgebiael(i, 'click', () => {
+                            this.removeCard(index);
+                        });
+                    })}" class="w-32 h-48 bg-stone-700 rounded-3xl shadow-md flex items-center justify-center text-xs p-2 outline outline-1 outline-stone-500 cursor-pointer transition-transform hover:scale-105"
+                         style="z-index: ${100 - index}"
+                         title="Удалить карту ${index + 1}">
+                        ${card.name}
+                    </div>
+                `;
+                }).join('');
+            }
+
+            // === Выполняем все отложенные обработчики ===
+            fns.forEach(f => f());
+        }
+
+        addCard(card) {
+            this.deck.push(card);
+            this.render();
+            this.setupHandlers();
+            this.onCardAdd.emit(card);
+        }
+
+        removeCard(index) {
+            this.deck.splice(index, 1);
+            this.render();
+            this.setupHandlers();
+            this.onCardRemove.emit(index);
+        }
+    }
+
 
     // тест
-    const rooms = [
-        { id: "id-0", name: "test", players: 1},
-        { id: "id-1", name: "echo", players: 2},
-        { id: "id-2", name: "crab", players: 2, password: "test" },
-    ];
-    const lobbyUi = new LobbyUi(document.getElementById('content'), rooms);
-    lobbyUi.onHostGame.add(i => console.log(`host: ${i}`));
-    lobbyUi.onJoinGame.add(i => console.log(`join: ${i}`));
-    lobbyUi.onSpectateGame.add(i => console.log(`spec: ${i}`));
+    // const rooms = [
+    //     { id: "id-0", name: "test", players: 1},
+    //     { id: "id-1", name: "echo", players: 2},
+    //     { id: "id-2", name: "crab", players: 2},
+    // ];
+    // const lobbyUi = new LobbyUi(document.getElementById('content'), rooms);
+    // lobbyUi.onHostGame.add(i => console.log(`host: ${i}`));
+    // lobbyUi.onJoinGame.add(i => console.log(`join: ${i}`));
+    // lobbyUi.onSpectateGame.add(i => console.log(`spec: ${i}`));
+    // const settings = { username: 'echo-crab', volume: 0.5 }
+    // const settingsUi = new SettingsUi(dgebi('content'), settings);
+    // settingsUi.onSave .add(i => console.log(i));
+    // settingsUi.onReset.add(i => console.log(`reset ${i}`));
 
 
     // === Инициализация соединения ===
