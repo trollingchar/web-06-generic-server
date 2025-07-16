@@ -207,23 +207,13 @@
 
 
     class DeckEditorUi {
-        constructor(container) {
+        constructor(container, cards, deck) {
             this.container = container;
 
-            // === Состояние ===
-            this.deck = []; // Массив карт в колоде
-            this.allCards = Array.from({ length: 100 }, (_, i) => ({
-                id: 'card-' + (i + 1),
-                name: 'Карта #' + (i + 1)
-            }));
+            this.cards = cards; // [card], id = index
+            this.deck = deck; // { id: count }
 
-            // === События ===
-            this.onCardAdd = new Event();
-            this.onCardRemove = new Event();
-
-            // === Рендерим UI ===
             this.render();
-            this.setupHandlers();
         }
 
         // todo косяк на косяке, переделать все это
@@ -232,85 +222,59 @@
 
             // === Вся разметка за один вызов innerHTML ===
             this.container.innerHTML = `
-            <!-- Верхняя панель -->
-            <div class="mb-4 flex gap-2">
-                <button id="${idGen.next(i => fns.push(() => dgebiael(i, 'click', () => {
-                    const cardId = 'card-' + Math.floor(Math.random() * 100 + 1);
-                    this.addCard({ id: cardId, name: cardId });
-                    // addCard дергает render
-                }))}" class="px-4 py-2 bg-lime-600 hover:bg-lime-500 rounded">Добавить случайную</button>
-                <button id="${idGen.next(i => fns.push(() => dgebiael(i, 'click', () => this.deck = [], this.render(), this.setupHandlers()))}" class="px-4 py-2 bg-stone-600 hover:bg-stone-500 rounded">Очистить</button>
-            </div>
-
-            <!-- Основной контент -->
-            <div class="flex flex-1 overflow-hidden gap-4">
-
-                <!-- Все карты слева -->
-                <div class="w-5/6 pr-4 overflow-y-auto border-r border-stone-700">
-                    <h2 class="font-bold text-lg mb-2">Доступные карты</h2>
-                    <div id="deck-editor-left" class="grid grid-cols-8 gap-4">
-                        <!-- todo почему здесь ниче нет -->
-                    </div>
+                <!-- Верхняя панель -->
+                <div class="mb-4 flex gap-2">
+                    <button id="${idGen.next(i => fns.push(() => dgebiael(i, 'click', () => {
+                        this.deck = [];
+                        this.deckContainer.innerHTML = '';
+                    })))}" class="px-4 py-2 bg-stone-600 hover:bg-stone-500 rounded">Очистить</button>
                 </div>
 
-                <!-- Колода справа -->
-                <div class="w-1/6 pl-4 overflow-y-auto">
-                    <h2 class="font-bold text-lg mb-2">Моя колода</h2>
-                    <div id="deck-editor-right" class="relative h-[500px]">
-                        <div id="deck-cards" class="flex flex-col -space-y-32">
-                            <!-- todo и здесь -->
+                <!-- Основной контент -->
+                <div class="flex flex-1 overflow-hidden gap-4">
+
+                    <!-- Все карты слева -->
+                    <div class="w-5/6 pr-4 overflow-y-auto border-r border-stone-700">
+                        <h2 class="font-bold text-lg mb-2">Карты</h2>
+                        <div class="grid grid-cols-8 gap-4">
+                            ${this.cards.map((card, i) => `
+                                <div
+                                    id="${idGen.next(ii => fns.push(() => dgebiael(ii, 'click', () => this.addCard(i))))}"
+                                    class="
+                                        w-32 h-48 bg-stone-700 rounded-3xl shadow-md text-center
+                                        text-xs p-2 outline outline-1 outline-stone-500 cursor-pointer">${card}</div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Колода справа -->
+                    <div class="w-1/6 pl-4 overflow-y-auto">
+                        <h2 class="font-bold text-lg mb-2">Моя колода</h2>
+                        <div id="deck-editor-right" class="relative h-[500px]">
+                            <div id="${idGen.next(i => fns.push(() => this.deckContainer = dgebi(i)))}" class="flex flex-col -space-y-32">
+                                todo
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        `;
-
-            // === Заполняем доступные карты ===
-            const leftArea = document.getElementById('deck-editor-left');
-            leftArea.innerHTML = this.allCards.map(card => {
-                return `
-                <div class="w-32 h-48 bg-stone-700 rounded-3xl shadow-md flex items-center justify-center text-xs p-2 outline outline-1 outline-stone-500 cursor-pointer"
-                     title="Добавить в колоду">${card.name}</div>`;
-            }).join('');
-
-            // === Заполняем текущую колоду ===
-            const rightArea = document.getElementById('deck-cards');
-            if (this.deck.length === 0) {
-                rightArea.innerHTML = '<div class="text-stone-400 mt-4">Колода пуста</div>';
-            } else {
-                rightArea.innerHTML = this.deck.map((card, index) => {
-                    const cardId = 'deck-card-' + index;
-                    return `
-                    <div id="${idGen.next(i => fns.push(() => {
-                        dgebiael(i, 'click', () => {
-                            this.removeCard(index);
-                        });
-                    })}" class="w-32 h-48 bg-stone-700 rounded-3xl shadow-md flex items-center justify-center text-xs p-2 outline outline-1 outline-stone-500 cursor-pointer transition-transform hover:scale-105"
-                         style="z-index: ${100 - index}"
-                         title="Удалить карту ${index + 1}">
-                        ${card.name}
-                    </div>
-                `;
-                }).join('');
-            }
+            `;
 
             // === Выполняем все отложенные обработчики ===
             fns.forEach(f => f());
         }
 
-        addCard(card) {
-            this.deck.push(card);
-            this.render();
-            this.setupHandlers();
-            this.onCardAdd.emit(card);
+        addCard(id) {
+            console.log(id);
+            // this.deck.push(card);
+            // this.render();
+            // this.onCardAdd.emit(card);
         }
 
-        removeCard(index) {
-            this.deck.splice(index, 1);
-            this.render();
-            this.setupHandlers();
-            this.onCardRemove.emit(index);
-        }
+        // removeCard(index) {
+        //     this.deck.splice(index, 1);
+        //     this.render();
+        //     this.onCardRemove.emit(index);
+        // }
     }
 
 
@@ -328,6 +292,8 @@
     // const settingsUi = new SettingsUi(dgebi('content'), settings);
     // settingsUi.onSave .add(i => console.log(i));
     // settingsUi.onReset.add(i => console.log(`reset ${i}`));
+    const cards = Array.from({length:100}, (_, i) => `Карта ${i}`);
+    const deckUi = new DeckEditorUi(dgebi('content'), cards, []);
 
 
     // === Инициализация соединения ===
